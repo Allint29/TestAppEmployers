@@ -1,0 +1,133 @@
+﻿@using EmplApp.Utils
+@model EmplApp.Models.Employee
+@{
+    ViewBag.Title = "Редактирование пользователя";
+}
+<form asp-action="Edit" asp-controller="Home">
+    <div class="container mt-2 align-content-between">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="LastName" class="control-label"></label>
+                        <input type="text" asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName"></span>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="control-label"></label>
+                        <input type="text" asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" />
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="FatherName" class="control-label"></label>
+                        <input type="text" asp-for="FatherName" class="form-control" />
+                        <span asp-validation-for="FatherName"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="Birthday" class="control-label"></label>
+                        <input type="date" asp-for="Birthday" class="form-control" />
+                        <span asp-validation-for="Birthday"></span>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="Man" class="control-label"></label>
+                        <input type="checkbox" asp-for="Man" class="form-control" />
+                        <span asp-validation-for="Man"></span>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="IsMarried" class="control-label"></label>
+                        <input type="checkbox" asp-for="IsMarried" class="form-control" />
+                        <span asp-validation-for="IsMarried"></span>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="form-group">
+                        <label asp-for="HasAuto" class="control-label"></label>
+                        <input type="checkbox" asp-for="HasAuto" class="form-control" />
+                        <span asp-validation-for="HasAuto"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="Comment" class="control-label"></label>
+            <textarea asp-for="Comment" class="form-control"></textarea>
+            <span asp-validation-for="Comment"></span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                <div class="form-group">
+                    <label asp-for="PositionId" class="control-label"></label>
+                    <select asp-for="PositionId" asp-items="ViewBag.Positions"></select>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="form-group">
+                    <label asp-for="DepId" class="control-label"></label>
+                    <select asp-for="DepId" asp-items="ViewBag.Departaments"></select>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="form-group">
+                    <label asp-for="Employmentday" class="control-label"></label>
+                    <input type="date" asp-for="Employmentday" class="form-control" />
+                    <span asp-validation-for="Employmentday"></span>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="form-group">
+                    <label asp-for="Fired" class="control-label"></label>
+                    <input type="checkbox" asp-for="Fired" class="form-control form-check-input" disabled />
+                    <span asp-validation-for="Fired"></span>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="form-group">
+                    <label asp-for="Dismissalday" class="control-label"></label>
+                    <input type="date" asp-for="Dismissalday" class="form-control" disabled />
+                    <span asp-validation-for="Dismissalday"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container mt-2 align-content-around">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                    <div class="form-group">
+                        <input type="submit" value="Сохранить" class="btn btn-primary" />
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="form-group">
+                       @if(!Model.Fired) {<a asp-action="Fire" asp-controller="Home" asp-route-id="@Model.Id" class="btn btn-danger">Уволить</a>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+
+@section scripts{
+
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}

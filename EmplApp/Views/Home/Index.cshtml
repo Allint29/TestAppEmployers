@@ -1,0 +1,110 @@
+﻿@using EmplApp.ViewModels
+@using EmplApp.Models
+@model IndexViewModel
+
+@using EmplApp.Models
+@using EmplApp.Utils
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+    <div class="text-center">
+        <h1 class="display-4">Список сотрудников</h1>
+        <form class="form-inline">
+            <div class="container align-content-between mb-5">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm m-2">
+                            <div class="form-group">
+                                <label for="find_str">Поиск: </label>
+                                <input type="text" name="find_str" id="find_str" class="form-control m-2"  />
+                            </div>
+                        </div>
+                        <div class="col-sm m-2">
+                            <div class="form-group">
+                                <label for="positionId">Должность: </label>
+                                <select name="positionId" id="positionId" class="form-control m-2">
+                                    @foreach (var pos in Model.Positions)
+                                    {
+                                        <option value="@pos.Id">@pos.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm m-2">
+                            <div class="form-group">
+                                <label for="departamentId">Отдел: </label>
+                                <select name="departamentId" id="departamentId" class="form-control  m-2">
+                                    @foreach (var dep in Model.Deps)
+                                    {
+                                        <option value="@dep.Id">@dep.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container align-content-between mb-2">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm">
+                            <div class="form-group ">
+                                <button type="submit" class="btn btn-primary">Искать</button>
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <a asp-action="Createdepartament" class="btn btn-primary">Добавить отдел</a>
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <a asp-action="Createposition" class="btn btn-primary">Добавить должность</a>
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <a asp-action="Create" class="btn btn-primary">Добавить сотрудника</a>
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="form-group">
+                                <a asp-action="Initialize" class="btn btn-primary">Добавить сотр. авто</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+
+            <table class="table">
+                <tr>
+                    <td><a asp-action="Index" asp-route-sortOrder="@ViewBag.NameSort">Фамилия @if(ViewBag.NameSort == SortState.NameAsc){<span>&#11015;</span>}else{<span>&#11014;</span>}</a></td>
+                    <td>Имя</td>
+                    <td>Отчество</td>
+                    <td>Пол</td>
+                    <td>Работает</td>
+                    <td>Должность</td>
+                    <td>Отдел</td>
+                </tr>
+
+                @foreach (var d in Model.Employers)
+                {
+                    <tr>
+                        <td>@d.LastName</td>
+                        <td>@d.FirstName</td>
+                        <td>@d.FatherName</td>
+                        @if (d.Man){<td>М</td>}else{<td>Ж</td>}
+                        @if (!d.Fired){<td>Работает</td>}else{<td>Уволен</td>}
+                        <td>@d.Position?.Name</td>
+                        <td>@d.Dep?.Name</td>
+                        <td><a asp-action="Edit" asp-controller="Home" asp-route-id="@d.Id" class="btn btn-primary">Ред.</a></td>
+                        <td><a asp-action="Delete" asp-controller="Home" asp-route-id="@d.Id" class="btn btn-danger">Уд.</a></td>
+                    </tr>
+                }
+            </table>
+        </div>
