@@ -21,13 +21,13 @@ namespace EmplApp.Controllers
         public IConfiguration _configuration { get; }
         private MyDbContext _db;
 
-        public HomeController(ILogger<HomeController> logger, MyDbContext context,  IConfiguration configuration)
+        public HomeController(ILogger<HomeController> logger, MyDbContext context, IConfiguration configuration)
         {
             _logger = logger;
             _db = context;
             _configuration = configuration;
         }
-        
+
         /// <summary>
         /// Подключает кастомный DbContext, создает таблицы если их нет
         /// </summary>
@@ -56,9 +56,12 @@ namespace EmplApp.Controllers
                     await _db.Insert(new Dep() { Name = i });
                 }
             }
+
+            _db.DataseseIsInitialized = true;
+
             return RedirectToAction("Index");
         }
-        
+
         /// <summary>
         /// Добавляет сотрудника автоматом заполняя поля
         /// </summary>
@@ -66,29 +69,29 @@ namespace EmplApp.Controllers
         public async Task<IActionResult> Initialize()
         {
             var rnd = new Random();
-            var list_names = new List<string>(){"Алексей", "Сергей", "Иван" , "Дмитрий" , "Петр" , "Тимур" };
+            var list_names = new List<string>() { "Алексей", "Сергей", "Иван", "Дмитрий", "Петр", "Тимур" };
             int numName = rnd.Next(list_names.Count());
             var list_fathername = new List<string>() { "Алексеевич", "Сергеевич", "Иванович", "Дмитриевич", "Петрович", "Тимурович" };
             int numNameFatherName = rnd.Next(list_fathername.Count());
             var list_lastname = new List<string>() { "Сергеев", "Бадаев", "Пупкин", "Иванов", "Депордье", "Филимонов" };
-            int numLastName= rnd.Next(list_lastname.Count());
+            int numLastName = rnd.Next(list_lastname.Count());
 
             var emp1 = new Employee
-             {
-                 FirstName = list_names[numName],
-                 LastName = list_lastname[numLastName],
-                 FatherName = list_fathername[numNameFatherName],
-                 Man = true,
-                 Birthday = new DateTime(rnd.Next(1985,1999), rnd.Next(1, 11), rnd.Next(1, 25)),
-                 IsMarried = true,
-                 HasAuto = false,
-                 Employmentday = new DateTime(rnd.Next(2005, 2018), rnd.Next(1, 11), rnd.Next(1, 25)),
-                 Comment = "Комментарий к" + list_lastname[numLastName],
-                 PositionId = rnd.Next(1, 5),
-                 DepId = rnd.Next(1, 4),
-                 Fired = false,
-                 Dismissalday = DateTime.MaxValue
-             };
+            {
+                FirstName = list_names[numName],
+                LastName = list_lastname[numLastName],
+                FatherName = list_fathername[numNameFatherName],
+                Man = true,
+                Birthday = new DateTime(rnd.Next(1985, 1999), rnd.Next(1, 11), rnd.Next(1, 25)),
+                IsMarried = true,
+                HasAuto = false,
+                Employmentday = new DateTime(rnd.Next(2005, 2018), rnd.Next(1, 11), rnd.Next(1, 25)),
+                Comment = "Комментарий к" + list_lastname[numLastName],
+                PositionId = rnd.Next(1, 5),
+                DepId = rnd.Next(1, 4),
+                Fired = false,
+                Dismissalday = DateTime.MaxValue
+            };
 
             //await _dbEF.AddRangeAsync(emp1);
             //await _dbEF.SaveChangesAsync();
@@ -122,7 +125,7 @@ namespace EmplApp.Controllers
                 .Select(p => new PositionViewModel { Id = p.Id, Name = p.Name })
                 .ToList();
             positionsModel.Insert(0, new PositionViewModel { Id = 0, Name = "Все" });
-            
+
             List<DepViewModel> depModel = _db.GetAllDepStoreProc()
                 .Result
                 .Select(d => new DepViewModel { Id = d.Id, Name = d.Name })
@@ -133,23 +136,23 @@ namespace EmplApp.Controllers
             if (String.IsNullOrEmpty(find_str))
                 emplModel = _db.GetAllEmployersStoreProc().Result;
             else
-                 emplModel = _db.FindEmploees(find_str).Result;
+                emplModel = _db.FindEmploees(find_str).Result;
             emplModel.OrderByDescending(d => d.LastName);
 
             emplModel = sortOrder switch
-                {
+            {
                 SortState.NameDesc => emplModel.OrderByDescending(s => s.LastName),
                 _ => emplModel.OrderBy(s => s.LastName),
-                };
-            
-            IndexViewModel ivm = new IndexViewModel { Positions = positionsModel, Deps = depModel,  Employers = emplModel};
-            
+            };
+
+            IndexViewModel ivm = new IndexViewModel { Positions = positionsModel, Deps = depModel, Employers = emplModel };
+
             if (positionId != null && positionId > 0)
                 ivm.Employers = (IQueryable<Employee>)emplModel.Where(e => e.PositionId == positionId);
 
             if (departamentId != null && departamentId > 0)
                 ivm.Employers = (IQueryable<Employee>)emplModel.Where(e => e.DepId == departamentId);
-            
+
             return View(ivm);
         }
 
@@ -183,11 +186,11 @@ namespace EmplApp.Controllers
         /// Маршрут создания пользователя вручную
         /// </summary>
         /// <returns></returns>
-        public async  Task<IActionResult> Create()
+        public async Task<IActionResult> Create()
         {
             var pos = _db.GetAllPositionsStoreProc().Result;
             var dep = _db.GetAllDepStoreProc().Result;
-            ViewBag.Positions = new SelectList(pos, "Id", "Name"); 
+            ViewBag.Positions = new SelectList(pos, "Id", "Name");
             ViewBag.Departaments = new SelectList(dep, "Id", "Name");
             return View();
         }
@@ -211,7 +214,7 @@ namespace EmplApp.Controllers
                 var dep = _db.GetAllDepStoreProc().Result;
                 ViewBag.Positions = new SelectList(pos, "Id", "Name");
                 ViewBag.Departaments = new SelectList(dep, "Id", "Name");
-                
+
                 Employee empl = await _db.TakeFirstEmployee(id);
 
                 if (empl != null)
@@ -290,14 +293,14 @@ namespace EmplApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Fire(Employee employee)
         {
-            if(employee == null) return NotFound("Сотрудник не найден!");
+            if (employee == null) return NotFound("Сотрудник не найден!");
 
-            if(employee.Dismissalday == null || 
+            if (employee.Dismissalday == null ||
                employee.Employmentday > employee.Dismissalday ||
-               employee.Dismissalday < new DateTime(1950,1,1)||
+               employee.Dismissalday < new DateTime(1950, 1, 1) ||
                employee.Dismissalday > DateTime.Today)
-                     ModelState.AddModelError("Dismissalday", "Не верно указана дата увольнения.");
-            if(employee.Fired == false) ModelState.AddModelError("Fired", "Не отмечено полу 'Уволен'.");
+                ModelState.AddModelError("Dismissalday", "Не верно указана дата увольнения.");
+            if (employee.Fired == false) ModelState.AddModelError("Fired", "Не отмечено полу 'Уволен'.");
 
 
 
@@ -326,7 +329,7 @@ namespace EmplApp.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-        
+
         #endregion
 
 

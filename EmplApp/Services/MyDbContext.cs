@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -26,12 +22,19 @@ namespace EmplApp.Services
         private string _nameCatalog { get; set; }
         private SqlConnection _myConn { get; set; }
         private bool _connected = false;
+        private bool _initialized = false;
 
         public List<Employee> Employers { get; set; } = new List<Employee>();
         private readonly List<Type> UsingTypes = new List<Type>();
         private readonly List<string> UsingTypesString = new List<string>() { "System.Int32", "System.String", "System.DateTime", "System.Boolean" };
 
         public MyDbContext() { }
+
+        public bool DataseseIsInitialized
+        {
+            get { return _initialized; }
+            set { _initialized = value; }
+        }
 
         private bool ContainsIntegratedSecurityString(string str)
         {
@@ -52,12 +55,24 @@ namespace EmplApp.Services
             }
             Debug.WriteLine(str + ": НЕ подключена БД");
             return false;
+        }
 
+
+        private bool IsInitialized(string str)
+        {
+            if (_initialized)
+            {
+                Debug.WriteLine(str + ": уже инициализирована БД");
+                return true;
+            }
+            Debug.WriteLine(str + ": еще не инициализирована БД");
+            return false;
         }
 
         public async Task CreateNewDatabase(string connectionString)
         {
             if (IsConnected("CreateNewDatabase")) return;
+            if (IsInitialized("CreateNewDatabase: ")) return;
 
             var listConnectionString = connectionString.Split(";");
             var conectionStringBuilder = new StringBuilder();
@@ -101,6 +116,7 @@ namespace EmplApp.Services
                     myCommand.ExecuteNonQuery();
                     Debug.WriteLine("Новая база создана.");
                     _connected = true;
+
                 }
                 catch (Exception e)
                 {
@@ -138,6 +154,7 @@ namespace EmplApp.Services
         {
             if (!IsConnected("CreateAllTable")) return;
             if (!ContainsIntegratedSecurityString("CreateAllTable")) return;
+            if (IsInitialized("CreateAllTable: ")) return;
 
             var str2 = new StringBuilder();
             str2.Append($"USE {_nameDatabase};");
@@ -221,6 +238,7 @@ namespace EmplApp.Services
         {
             if (!IsConnected("PutStoreProcedure")) return;
             if (!ContainsIntegratedSecurityString("PutStoreProcedure")) return;
+            if (IsInitialized("CreateAllTable: ")) return;
 
             var str2 = new StringBuilder();
             var procedure_list = new List<string>();
@@ -306,7 +324,7 @@ namespace EmplApp.Services
 
                 procedure_list.Add(nameProc.ToString());
             }
-            
+
             string find_procedure = "CREATE PROCEDURE dbo.sp_FindEmploees @name NVARCHAR(50) AS " +
                                     "SELECT * FROM sp_GetAllEmplViews " +
                                     "WHERE (" +
@@ -328,9 +346,9 @@ namespace EmplApp.Services
                                     $"Positions.Name LIKE '%'+@name+'%' OR " +
                                     $"Deps.Name LIKE '%'+@name+'%')";*/
             #endregion
-            
+
             procedure_list.Add(find_procedure);
-            
+
             foreach (var proc in procedure_list)
             {
                 try
@@ -411,7 +429,7 @@ namespace EmplApp.Services
             }
             string com = str1.ToString().Remove(str1.ToString().Length - 1) + ")" + str2.ToString().Remove(str2.ToString().Length - 1) + ")" + " SELECT SCOPE_IDENTITY()";
 
-            Debug.WriteLine("____"+com+"_______");
+            Debug.WriteLine("____" + com + "_______");
             try
             {
                 using (SqlConnection connection = new SqlConnection(_connectionString + _nameCatalog))
@@ -437,10 +455,10 @@ namespace EmplApp.Services
             if (!UsingTypes.Contains(type_)) return;
             var str1 = new StringBuilder();
             var str2 = new StringBuilder();
-            
+
             PropertyInfo[] list = type_.GetProperties();
             str1.Append($"USE {_nameDatabase}; IF OBJECT_ID(N'{type_.Name}s','U') IS NOT NULL UPDATE {type_.Name}s SET ");
-            
+
             for (int i = 0; i < list.Length; i++)
             {
                 var item = list[i];
@@ -481,8 +499,8 @@ namespace EmplApp.Services
             }
             //удаляю последнюю запятую
             string com = str1.ToString();
-            com = com.Remove(com.Length - 2,2) + $" WHERE Id = {id}";
-            Debug.WriteLine("!__________________"+com+"____________");
+            com = com.Remove(com.Length - 2, 2) + $" WHERE Id = {id}";
+            Debug.WriteLine("!__________________" + com + "____________");
             try
             {
                 using (SqlConnection connection = new SqlConnection(_connectionString + _nameCatalog))
@@ -563,14 +581,14 @@ namespace EmplApp.Services
                     };
                     // добавляем параметр
                     command.Parameters.Add(nameParam);
-                  
+
                     using (var reader = command.ExecuteReader())
                     {
                         if (reader.HasRows)
                         {
                             while (reader.Read())
                             {
-                               return MakeEmployee(reader);
+                                return MakeEmployee(reader);
                             }
                         }
                     }
@@ -622,9 +640,9 @@ namespace EmplApp.Services
 
             if (!IsConnected("GetAllEmployersStoreProc")) return list_to_return.AsQueryable();
             if (!ContainsIntegratedSecurityString("GetAllEmployersStoreProc")) return list_to_return.AsQueryable();
-            
+
             string sqlExpression = $"sp_GetAllEmployeesFromView";
-            
+
             using (SqlConnection connection = new SqlConnection(_connectionString + _nameCatalog))
             {
                 try
@@ -637,7 +655,7 @@ namespace EmplApp.Services
                     //adapter.Fill(ds);
                     //
                     //var r = ds.Tables.AsQueryable();
-                    
+
                     command.CommandType = System.Data.CommandType.StoredProcedure;
                     using (var reader = command.ExecuteReader())
                     {
@@ -658,7 +676,7 @@ namespace EmplApp.Services
 
             return list_to_return.AsQueryable();
         }
-        
+
         public async Task<IQueryable<Employee>> FindEmploees(string str)
         {
             var list_to_return = new List<Employee>();
@@ -678,7 +696,7 @@ namespace EmplApp.Services
                 {
                     await connection.OpenAsync();
                     SqlCommand command = new SqlCommand(sqlExpression, connection);
-                    
+
                     command.CommandType = System.Data.CommandType.StoredProcedure;
                     // параметр для id
                     SqlParameter nameParam = new SqlParameter
@@ -701,20 +719,20 @@ namespace EmplApp.Services
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine("________________ "+ e + "___________________________________________");
+                    Debug.WriteLine("________________ " + e + "___________________________________________");
                 }
             }
             Debug.WriteLine($"After GetAllEmployersStoreProc ____{list_to_return.Count}");
             return list_to_return.AsQueryable();
         }
-        
+
         public async Task<List<Position>> GetAllPositionsStoreProc()
         {
             var list_to_return = new List<Position>();
 
             if (!IsConnected("GetAllPositionsStoreProc")) return list_to_return;
             if (!ContainsIntegratedSecurityString("GetAllPositionsStoreProc")) return list_to_return;
-            
+
 
             string sqlExpression = $"sp_GetPositions";
 
@@ -759,7 +777,7 @@ namespace EmplApp.Services
 
             if (!IsConnected("GetAllDepStoreProc")) return list_to_return;
             if (!ContainsIntegratedSecurityString("GetAllDepStoreProc")) return list_to_return;
-            
+
             string sqlExpression = $"sp_GetDeps";
 
             using (SqlConnection connection = new SqlConnection(_connectionString + _nameCatalog))
@@ -828,9 +846,9 @@ namespace EmplApp.Services
                 Debug.WriteLine("MakeEmployee:  " + e);
                 return new Employee();
             }
-           
 
-            
+
+
         }
 
     }
